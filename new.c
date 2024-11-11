@@ -8,6 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <header.h>
+#include <linux/time.h>
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
