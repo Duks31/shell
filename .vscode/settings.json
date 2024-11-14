@@ -1,9 +1,0 @@
-{
-    "files.associations": {
-        "bitset": "c",
-        "stdbool.h": "c",
-        "pwd.h": "c",
-        "stdio.h": "c",
-        "time.h": "c"
-    }
-}
