@@ -12,11 +12,11 @@ int (*builtin_func[])(char ***) = {&sh_cd, &sh_help, &sh_exit, &sh_time};
 
 int sh_num_builtins() { return sizeof(builtin_strs) / sizeof(char *); }
 
-int sh_run(char ***, int);
+int sh_run(char ***, int );
 
 char *read_line();
 char **split_pipes(char *);
-char ***split_args(char **);
+char ***split_args(char **, int *);
 
 void execute_command(char **, int, int);
 int execute_pipeline(char ***, int);

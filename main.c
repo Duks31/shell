@@ -1,14 +1,15 @@
-#include <linux/limits.h>
+#include <time.h>
 #include <pwd.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <time.h>
 #include <unistd.h>
-#include <header.h>
-#include <linux/time.h>
+#include <stdlib.h>
+#include <linux/limits.h>
+
+#include "header.h"
 
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
@@ -97,6 +98,8 @@ char **split_pipes(char *line)
             --end_of_str;
         }
     }
+
+    return commands;
 }
 
 char ***split_args(char **commands, int *status)
@@ -274,19 +277,23 @@ int sh_help(char ***args)
     printf("Shell Help Page\n\n");
     printf("Available commands: \n");
 
-    for (int i =0; i < sh_num_builtins(); i++) {
+    for (int i = 0; i < sh_num_builtins(); i++)
+    {
         printf("- %s\n", builtin_strs[i]);
     }
 }
 
-int sh_exit(char ***args) {return 0;}
+int sh_exit(char ***args) { return 0; }
 
 int sh_time(char ***args)
 {
     args[0]++;
 
     int i = 0;
-    while (args[i++]) {;}
+    while (args[i++])
+    {
+        ;
+    }
 
     struct timespec start, end;
     double elapsed_time;
@@ -294,35 +301,39 @@ int sh_time(char ***args)
     clock_gettime(CLOCK_MONOTONIC, &start);
     int res = sh_run(args, i);
     clock_gettime(CLOCK_MONOTONIC, &end);
-    
+
     elapsed_time = (end.tv_sec - start.tv_sec) * 1000.0 + (end.tv_nsec - start.tv_nsec) / 1e6;
-    printf("Time: %.3f milliseconds\n", elapsed_time); 
+    printf("Time: %.3f milliseconds\n", elapsed_time);
 
     // Return pointer to "time" for free()
     args[0]--;
-    return res; 
+    return res;
 }
 
 int execute_pipeline(char ***commands, int num_commands)
 {
-    // No commands given 
-    if (commands[0][0][0] == '\0') {    
+    // No commands given
+    if (commands[0][0][0] == '\0')
+    {
         return 1;
     }
 
     // create pipes
     int **pipes = malloc((num_commands - 1) * sizeof(int *));
-    for (int i = 0; i < num_commands - 1; i++) {
+    for (int i = 0; i < num_commands - 1; i++)
+    {
         pipes[i] = malloc(2 * sizeof(int));
-        if (pipe(pipes[i]) == -1) {
+        if (pipe(pipes[i]) == -1)
+        {
             perror("pipe");
             return 0;
         }
     }
-    
+
     // Execute commands in the pipeline
-    for (int i = 0; i < num_commands - 1; i++) {
-        int input_fd = (i == 0) ? STDIN_FILENO : pipes[i-1][0];
+    for (int i = 0; i < num_commands - 1; i++)
+    {
+        int input_fd = (i == 0) ? STDIN_FILENO : pipes[i - 1][0];
         int output_fd = pipes[i][1];
 
         execute_command(commands[i], input_fd, output_fd);
@@ -330,12 +341,13 @@ int execute_pipeline(char ***commands, int num_commands)
     }
 
     // Execute last (or only) command
-    int input_fd = (num_commands > 1) ? pipes[num_commands-2][0] : STDIN_FILENO;
+    int input_fd = (num_commands > 1) ? pipes[num_commands - 2][0] : STDIN_FILENO;
     int output_fd = STDOUT_FILENO;
-    execute_command(commands[num_commands-1], input_fd, output_fd);
+    execute_command(commands[num_commands - 1], input_fd, output_fd);
 
     // close/cleanup pipes
-    for (int i = 0; i < num_commands - 1; i++) {
+    for (int i = 0; i < num_commands - 1; i++)
+    {
         close(pipes[i][0]);
         close(pipes[i][1]);
         free(pipes[i]);
@@ -343,37 +355,46 @@ int execute_pipeline(char ***commands, int num_commands)
 
     free(pipes);
     return 1;
-}   
+}
 
-void execute_command(char **args, int input_fd, int output_fd) {
+void execute_command(char **args, int input_fd, int output_fd)
+{
     // create child
 
     pid_t pid;
     pid_t wpid;
     int status;
 
-    if ((pid = fork()) == 0) {
+    if ((pid = fork()) == 0)
+    {
         // child process context
 
         // redirect in and out file descriptors if needed
-        if (input_fd != STDIN_FILENO) {
-            dup2(input_fd, STDOUT_FILENO); 
+        if (input_fd != STDIN_FILENO)
+        {
+            dup2(input_fd, STDOUT_FILENO);
             close(input_fd);
         }
 
         // Execute command
-        if (execvp(args[0], args) == -1) {
+        if (execvp(args[0], args) == -1)
+        {
             perror("execvp");
             exit(EXIT_FAILURE);
         }
-    } else if (pid < 0) {
-        // fork failed 
+    }
+    else if (pid < 0)
+    {
+        // fork failed
         perror("fork");
         exit(EXIT_FAILURE);
-    }  else {
+    }
+    else
+    {
         // parent process
-        do {
+        do
+        {
             wpid = waitpid(pid, &status, WUNTRACED);
-        } while (!WIFEXITED(status) && !WIFSIGNALD(status));
+        } while (!WIFEXITED(status) && !WIFSIGNALED(status));
     }
 }
